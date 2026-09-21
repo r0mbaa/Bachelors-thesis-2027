@@ -1,0 +1,12 @@
+# Windows / macOS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Office temp files
+~$*
+*.tmp
+
+# Editors
+.vscode/
+.idea/
