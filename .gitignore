@@ -10,3 +10,25 @@ desktop.ini
 # Editors
 .vscode/
 .idea/
+
+# Gradle / Java
+.gradle/
+.kotlin/
+build/
+out/
+*.class
+hs_err_pid*.log
+.jqwik-database
+
+# Node (web, terminal)
+node_modules/
+dist/
+
+# Python (analysis)
+__pycache__/
+.venv/
+
+# Локальные секреты и сертификаты разработки (mkcert)
+.env
+*.pem
+*.key

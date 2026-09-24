@@ -1,0 +1,12 @@
+* text=auto
+
+# Скрипты запуска: gradlew должен остаться с LF, иначе не запустится в Linux (CI, Docker).
+gradlew text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+*.jar  binary
+*.docx binary
+*.pdf  binary
+*.png  binary
