@@ -72,4 +72,6 @@ cd wms
 ./gradlew :planner:bootRun # планировщик на :8081
 ```
 
+Для `core` нужен запущенный Docker. Интеграционные тесты поднимают PostgreSQL 16 через Testcontainers, а `bootRun` сам запускает его из [`docker-compose.yml`](docker-compose.yml). Встраиваемая БД не подходит, потому что инварианты учёта держатся на CHECK-ограничениях, триггерах и блокировках строк PostgreSQL (§12.2).
+
 Версии зависимостей зафиксированы в [`gradle/libs.versions.toml`](gradle/libs.versions.toml), общие настройки Java-модулей — в [`build-logic`](build-logic/src/main/kotlin/wms.java-conventions.gradle.kts).
