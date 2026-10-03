@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,6 +39,18 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail badRequest(IllegalArgumentException e) {
         return problem(HttpStatus.BAD_REQUEST, "Некорректные данные", e.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ProblemDetail unauthenticated(AuthenticationException e) {
+        return problem(HttpStatus.UNAUTHORIZED, "Требуется вход", e.getMessage());
+    }
+
+    /** Отказ {@code @PreAuthorize}: пользователь вошёл, но его роли операция недоступна. */
+    @ExceptionHandler(AccessDeniedException.class)
+    ProblemDetail forbidden(AccessDeniedException e) {
+        return problem(HttpStatus.FORBIDDEN, "Недостаточно прав",
+                "Операция недоступна вашей роли: обратитесь к администратору, если она нужна вам в работе");
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)

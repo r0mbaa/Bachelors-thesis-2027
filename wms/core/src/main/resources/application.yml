@@ -27,6 +27,14 @@ spring:
 server:
   port: 8080
 
+wms:
+  security:
+    # Ключ подписи JWT, Base64 от 32 байт (openssl rand -base64 32). Пусто — случайный ключ на каждый запуск.
+    jwt-secret: ${WMS_JWT_SECRET:}
+    bootstrap:
+      # Пароль первого администратора; создаётся, только если в БД ещё нет пользователей.
+      password: ${WMS_ADMIN_PASSWORD:}
+
 management:
   endpoints:
     web:
