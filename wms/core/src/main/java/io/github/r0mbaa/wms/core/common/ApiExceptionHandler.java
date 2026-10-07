@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -81,6 +82,24 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail body = problem(HttpStatus.BAD_REQUEST, "Некорректные данные", "Исправьте поля запроса: " + fields);
         body.setProperty("errors", errors);
         return handleExceptionInternal(e, body, headers, status, request);
+    }
+
+    /**
+     * Value-типы проверяют себя в конструкторе, и при разборе JSON их исключение оказывается
+     * глубоко в цепочке причин. Пользователю нужно именно оно, а не «тело не разобрано».
+     */
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        String detail = "Тело запроса не разобрано: проверьте формат JSON, имена и типы полей";
+        for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof IllegalArgumentException) {
+                detail = cause.getMessage();
+                break;
+            }
+        }
+        return handleExceptionInternal(e, problem(HttpStatus.BAD_REQUEST, "Некорректные данные", detail), headers,
+                status, request);
     }
 
     private static ProblemDetail problem(HttpStatus status, String title, String detail) {

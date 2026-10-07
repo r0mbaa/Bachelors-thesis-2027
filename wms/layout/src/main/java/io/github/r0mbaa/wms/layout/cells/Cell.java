@@ -12,6 +12,11 @@ import io.github.r0mbaa.wms.shared.marking.LocationCode;
  * @param access      точка на лицевой линии ряда напротив центра ячейки. От неё граф проецирует
  *                    ячейку на ось прохода (§8.7, А1–А3)
  * @param facing      куда обращена лицевая сторона, т.е. с какой стороны к ячейке подходят
+ * @param volume      полезный объём ячейки, м³: ширина × глубина × высота яруса (FR-M1-06)
+ * @param maxWeightKg допустимая нагрузка на ячейку, кг: нагрузка на ярус профиля, поделённая
+ *                    поровну между ячейками яруса (FR-M1-06)
  */
-public record Cell(LocationCode code, Point center, double shelfHeight, Point access, Facing facing) {
+public record Cell(
+        LocationCode code, Point center, double shelfHeight, Point access, Facing facing,
+        double volume, double maxWeightKg) {
 }

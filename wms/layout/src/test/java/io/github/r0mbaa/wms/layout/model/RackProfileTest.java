@@ -28,6 +28,14 @@ class RackProfileTest {
     }
 
     @Test
+    void cellCapacityFollowsLevelHeightAndSplitsLoadEvenly() {
+        // 0,4 × 0,6 × 0,5 м нижнего яруса и 0,4 × 0,6 × 0,4 м верхних.
+        assertThat(profile.cellVolume(1)).isCloseTo(0.12, within(1e-9));
+        assertThat(profile.cellVolume(3)).isCloseTo(0.096, within(1e-9));
+        assertThat(profile.maxLoadPerCellKg()).isCloseTo(50, within(1e-9));
+    }
+
+    @Test
     void rejectsNonPositiveDimensions() {
         assertThatThrownBy(() -> new RackProfile("X", RackKind.SHELF, List.of(0.4, 0.0), 1, 0.4, 0.6, 100))
                 .hasMessageContaining("высота яруса");

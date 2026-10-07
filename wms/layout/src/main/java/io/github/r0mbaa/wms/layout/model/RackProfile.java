@@ -55,6 +55,17 @@ public record RackProfile(
         return shelfHeight(levels()) + levelHeights.getLast();
     }
 
+    /** Объём ячейки яруса, м³. Ярусы разной высоты дают ячейки разного объёма (FR-M15-03b). */
+    public double cellVolume(int level) {
+        requireLevel(level);
+        return cellWidth * depth * levelHeights.get(level - 1);
+    }
+
+    /** Нагрузка на ярус делится поровну между его ячейками. */
+    public double maxLoadPerCellKg() {
+        return maxLoadPerLevelKg / cellsPerLevel;
+    }
+
     /**
      * Высота полки яруса над полом, м: сумма высот нижележащих ярусов. Именно она, а не номер
      * яруса, служит аргументом вертикального штрафа h(z): номера ярусов разных профилей
@@ -63,14 +74,18 @@ public record RackProfile(
      * @param level номер яруса, начиная с 1
      */
     public double shelfHeight(int level) {
-        if (level < 1 || level > levels()) {
-            throw new IllegalArgumentException("Профиль '" + name + "': нет яруса " + level);
-        }
+        requireLevel(level);
         double height = 0;
         for (int i = 0; i < level - 1; i++) {
             height += levelHeights.get(i);
         }
         return height;
+    }
+
+    private void requireLevel(int level) {
+        if (level < 1 || level > levels()) {
+            throw new IllegalArgumentException("Профиль '" + name + "': нет яруса " + level);
+        }
     }
 
     private static void requirePositive(String profile, String what, double value) {

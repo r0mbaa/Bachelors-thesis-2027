@@ -57,6 +57,9 @@ class CellGeneratorTest {
         // Секция 2, позиция 2: 1,2 м первой секции + 1,5 ячейки по 0,6 м.
         assertThat(last.center().x()).isCloseTo(2 + 1.2 + 0.9, EPS);
         assertThat(last.shelfHeight()).isCloseTo(0.9, EPS);
+        // Верхний ярус 0,4 м: 0,6 × 0,5 × 0,4; нагрузка 150 кг на ярус из двух ячеек.
+        assertThat(last.volume()).isCloseTo(0.12, EPS);
+        assertThat(last.maxWeightKg()).isCloseTo(75, EPS);
     }
 
     @Test

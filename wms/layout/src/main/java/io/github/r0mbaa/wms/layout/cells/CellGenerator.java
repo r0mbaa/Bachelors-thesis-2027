@@ -35,7 +35,9 @@ public final class CellGenerator {
                                 place(row, rowDepth, along, profile.depth() / 2),
                                 profile.shelfHeight(level),
                                 place(row, rowDepth, along, 0),
-                                row.facing()));
+                                row.facing(),
+                                profile.cellVolume(level),
+                                profile.maxLoadPerCellKg()));
                     }
                 }
                 sectionStart += profile.sectionWidth();
