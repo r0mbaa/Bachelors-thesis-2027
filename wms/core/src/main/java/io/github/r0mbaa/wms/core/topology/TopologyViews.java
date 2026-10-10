@@ -1,7 +1,9 @@
 package io.github.r0mbaa.wms.core.topology;
 
+import io.github.r0mbaa.wms.core.catalog.StorageClass;
 import io.github.r0mbaa.wms.layout.model.Facing;
 import java.time.Instant;
+import java.util.List;
 
 /** Представления топологии в API. Собираются из сущностей с уже загруженными связями. */
 public final class TopologyViews {
@@ -44,6 +46,7 @@ public final class TopologyViews {
             Facing facing,
             Double maxWeightKg,
             Double maxVolumeM3,
+            List<StorageClass> allowedStorageClasses,
             boolean blocked,
             String blockReason,
             boolean active,
@@ -56,6 +59,7 @@ public final class TopologyViews {
                     l.getX(), l.getY(), l.getZ(),
                     l.getAccessX() == null ? null : new Point(l.getAccessX(), l.getAccessY()),
                     l.getFacing(), l.getMaxWeightKg(), l.getMaxVolumeM3(),
+                    l.getAllowedStorageClasses().stream().sorted().toList(),
                     l.isBlocked(), l.getBlockReason(), l.isActive(), l.qrPayload());
         }
     }

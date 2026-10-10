@@ -1,9 +1,11 @@
 package io.github.r0mbaa.wms.core.topology;
 
+import io.github.r0mbaa.wms.core.catalog.StorageClass;
 import io.github.r0mbaa.wms.layout.model.Facing;
 import io.github.r0mbaa.wms.shared.marking.LocationCode;
 import io.github.r0mbaa.wms.shared.marking.QrPayload;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +17,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Место хранения. Ячейки стеллажей создаёт и обновляет только материализация планировки
@@ -74,6 +78,11 @@ public class Location {
 
     @Column(name = "max_volume_m3")
     private Double maxVolumeM3;
+
+    /** Пусто — ячейка принимает товар любого класса хранения. */
+    @Convert(converter = StorageClassesConverter.class)
+    @Column(name = "allowed_storage_classes")
+    private Set<StorageClass> allowedStorageClasses = Set.of();
 
     private boolean blocked;
 
@@ -169,6 +178,15 @@ public class Location {
         return maxVolumeM3;
     }
 
+    public Set<StorageClass> getAllowedStorageClasses() {
+        return allowedStorageClasses;
+    }
+
+    /** Совместимость класса хранения товара с ячейкой (FR-M1-06, FR-M2-04). */
+    public boolean accepts(StorageClass storageClass) {
+        return allowedStorageClasses.isEmpty() || allowedStorageClasses.contains(storageClass);
+    }
+
     public boolean isBlocked() {
         return blocked;
     }
@@ -206,5 +224,9 @@ public class Location {
 
     void setType(LocationType type) {
         this.type = type;
+    }
+
+    void setAllowedStorageClasses(Set<StorageClass> classes) {
+        this.allowedStorageClasses = classes.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(classes));
     }
 }

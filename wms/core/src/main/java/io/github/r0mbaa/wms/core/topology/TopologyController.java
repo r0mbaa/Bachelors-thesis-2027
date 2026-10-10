@@ -1,5 +1,6 @@
 package io.github.r0mbaa.wms.core.topology;
 
+import io.github.r0mbaa.wms.core.catalog.StorageClass;
 import io.github.r0mbaa.wms.core.common.PageResponse;
 import io.github.r0mbaa.wms.core.topology.TopologyViews.LocationView;
 import io.github.r0mbaa.wms.core.topology.TopologyViews.WarehouseView;
@@ -108,6 +109,12 @@ class TopologyController {
         return LocationView.from(topology.setType(code, request.type()));
     }
 
+    @PutMapping("/locations/{code}/storage-classes")
+    @PreAuthorize("hasRole('WAREHOUSE_ADMIN')")
+    LocationView setStorageClasses(@PathVariable String code, @Valid @RequestBody StorageClassesRequest request) {
+        return LocationView.from(topology.setAllowedStorageClasses(code, request.classes()));
+    }
+
     record CreateWarehouseRequest(@NotBlank String code, @NotBlank String name, @Positive double defaultSpeedMps) {
     }
 
@@ -122,5 +129,9 @@ class TopologyController {
     }
 
     record TypeRequest(@NotNull LocationType type) {
+    }
+
+    /** Пустой список снимает ограничение. */
+    record StorageClassesRequest(@NotNull Set<StorageClass> classes) {
     }
 }

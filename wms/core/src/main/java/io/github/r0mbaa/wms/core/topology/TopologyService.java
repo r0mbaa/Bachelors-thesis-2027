@@ -1,6 +1,7 @@
 package io.github.r0mbaa.wms.core.topology;
 
 import io.github.r0mbaa.wms.core.admin.AuditLog;
+import io.github.r0mbaa.wms.core.catalog.StorageClass;
 import io.github.r0mbaa.wms.core.common.ConflictException;
 import io.github.r0mbaa.wms.core.common.NotFoundException;
 import io.github.r0mbaa.wms.shared.marking.LocationCode;
@@ -142,6 +143,24 @@ public class TopologyService {
         String before = location.getBlockReason();
         location.unblock();
         audit.record("LOCATION_UNBLOCKED", "LOCATION", location.getCode(), before, null);
+        return location;
+    }
+
+    /**
+     * Какие классы хранения принимает ячейка (FR-M1-06): например, верхний ярус не для тяжёлого.
+     * Пустой набор снимает ограничение.
+     */
+    @Transactional
+    public Location setAllowedStorageClasses(String code, Set<StorageClass> classes) {
+        Location location = location(code);
+        if (!location.isCell()) {
+            throw new IllegalArgumentException("Ограничение по классам хранения задаётся только ячейке стеллажа, а "
+                    + location.getCode() + " — виртуальное место");
+        }
+        List<StorageClass> before = location.getAllowedStorageClasses().stream().sorted().toList();
+        location.setAllowedStorageClasses(classes);
+        audit.record("LOCATION_STORAGE_CLASSES_CHANGED", "LOCATION", location.getCode(), before,
+                classes.stream().sorted().toList());
         return location;
     }
 
