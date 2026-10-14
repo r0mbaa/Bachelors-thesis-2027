@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Import;
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(PostgresTestcontainer.class)
+@Import({PostgresTestcontainer.class, Fixture.class})
 @ExtendWith(TruncateTablesExtension.class)
 public @interface IntegrationTest {
 }

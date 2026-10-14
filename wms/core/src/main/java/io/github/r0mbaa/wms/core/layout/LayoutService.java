@@ -15,6 +15,7 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,10 +34,12 @@ public class LayoutService {
     private final AuditLog audit;
     private final CurrentUser currentUser;
     private final JsonMapper json;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     LayoutService(WarehouseRepository warehouses, LayoutVersionRepository versions, TopologyService topology,
-            CellMaterializer materializer, AuditLog audit, CurrentUser currentUser, JsonMapper json, Clock clock) {
+            CellMaterializer materializer, AuditLog audit, CurrentUser currentUser, JsonMapper json,
+            ApplicationEventPublisher events, Clock clock) {
         this.warehouses = warehouses;
         this.versions = versions;
         this.topology = topology;
@@ -44,6 +47,7 @@ public class LayoutService {
         this.audit = audit;
         this.currentUser = currentUser;
         this.json = json;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -77,6 +81,7 @@ public class LayoutService {
         versions.save(new LayoutVersion(warehouse, next, json.writeValueAsString(layout), currentUser.username(),
                 clock.instant()));
         warehouse.setLayoutVersion(next);
+        events.publishEvent(new LayoutSaved(warehouse.getId(), next));
         audit.record("LAYOUT_SAVED", "LAYOUT", warehouse.getCode(), current,
                 Map.of("version", next, "cells", result.cells(), "added", result.added(), "removed", result.removed()));
         return new SaveResult(next, result.cells(), result.added(), result.removed());

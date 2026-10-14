@@ -5,13 +5,16 @@ import io.github.r0mbaa.wms.core.catalog.StorageClass;
 import io.github.r0mbaa.wms.core.common.ConflictException;
 import io.github.r0mbaa.wms.core.common.NotFoundException;
 import io.github.r0mbaa.wms.shared.marking.LocationCode;
+import io.github.r0mbaa.wms.shared.marking.QrPayload;
 import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,18 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TopologyService {
 
+    /** Похоже на адрес ячейки: такой код проверяется по контрольному символу, чтобы поймать опечатку. */
+    private static final Pattern CELL_ADDRESS = Pattern.compile("[A-Z][A-Z0-9]{0,5}-R\\d{2}-.*");
+
     private final WarehouseRepository warehouses;
     private final ZoneRepository zones;
     private final LocationRepository locations;
     private final AuditLog audit;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     TopologyService(WarehouseRepository warehouses, ZoneRepository zones, LocationRepository locations,
-            AuditLog audit, Clock clock) {
+            AuditLog audit, ApplicationEventPublisher events, Clock clock) {
         this.warehouses = warehouses;
         this.zones = zones;
         this.locations = locations;
         this.audit = audit;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -108,6 +116,7 @@ public class TopologyService {
         Warehouse warehouse = warehouse(warehouseCode);
         Zone zone = zone(warehouse, zoneCode);
         int changed = locations.assignZone(warehouse, rows, zone, zone.getType());
+        events.publishEvent(new RowsAssignedToZone(zone.getId(), zone.getCode(), zone.getStoragePolicy()));
         audit.record("ROWS_ASSIGNED_TO_ZONE", "ZONE", warehouse.getCode() + "/" + zone.getCode(), null,
                 Map.of("rows", rows.stream().sorted().toList(), "cells", changed));
         return changed;
@@ -118,6 +127,22 @@ public class TopologyService {
         return locations.findByCode(code.strip().toUpperCase(Locale.ROOT))
                 .orElseThrow(() -> new NotFoundException("Место хранения " + code
                         + " не найдено: проверьте код на этикетке или отсканируйте её"));
+    }
+
+    /**
+     * Место по тому, что отсканировали или ввели: QR {@code LOC:…} или код. Введённый вручную
+     * адрес ячейки сверяется по контрольному символу, и опечатка отличается от несуществующей
+     * ячейки (FR-M10-04b).
+     */
+    @Transactional(readOnly = true)
+    public Location resolveLocation(String scanned) {
+        String code = scanned == null ? "" : scanned.strip().toUpperCase(Locale.ROOT);
+        if (code.startsWith("LOC:")) {
+            code = ((QrPayload.Location) QrPayload.parse(code)).code().value();
+        } else if (CELL_ADDRESS.matcher(code).matches()) {
+            code = LocationCode.parse(code).value();
+        }
+        return location(code);
     }
 
     @Transactional(readOnly = true)
