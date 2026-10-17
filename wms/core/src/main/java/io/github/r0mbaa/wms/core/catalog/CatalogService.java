@@ -7,6 +7,7 @@ import io.github.r0mbaa.wms.shared.marking.QrPayload;
 import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -91,14 +92,18 @@ public class CatalogService {
      */
     @Transactional(readOnly = true)
     public Sku resolve(String scanned) {
+        return find(scanned).orElseThrow(() -> new NotFoundException("Товар по коду '" + scanned.strip()
+                + "' не найден: отсканируйте QR товара или проверьте штрихкод в справочнике"));
+    }
+
+    /** То же, что {@link #resolve}, но без исключения: для разбора скана, который может оказаться не товаром. */
+    @Transactional(readOnly = true)
+    public Optional<Sku> find(String scanned) {
         String code = scanned == null ? "" : scanned.strip();
         if (code.regionMatches(true, 0, "SKU:", 0, 4)) {
-            return get(((QrPayload.Sku) QrPayload.parse(code)).article());
+            return skus.findByArticle(((QrPayload.Sku) QrPayload.parse(code)).article());
         }
-        return skus.findByBarcode(code)
-                .or(() -> skus.findByArticle(code))
-                .orElseThrow(() -> new NotFoundException("Товар по коду '" + code
-                        + "' не найден: отсканируйте QR товара или проверьте штрихкод в справочнике"));
+        return skus.findByBarcode(code).or(() -> skus.findByArticle(code));
     }
 
     private void requireFreeBarcode(String barcode) {

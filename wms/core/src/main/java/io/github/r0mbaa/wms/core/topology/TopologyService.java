@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
@@ -123,8 +124,13 @@ public class TopologyService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<Location> findLocation(String code) {
+        return locations.findByCode(code.strip().toUpperCase(Locale.ROOT));
+    }
+
+    @Transactional(readOnly = true)
     public Location location(String code) {
-        return locations.findByCode(code.strip().toUpperCase(Locale.ROOT))
+        return findLocation(code)
                 .orElseThrow(() -> new NotFoundException("Место хранения " + code
                         + " не найдено: проверьте код на этикетке или отсканируйте её"));
     }
