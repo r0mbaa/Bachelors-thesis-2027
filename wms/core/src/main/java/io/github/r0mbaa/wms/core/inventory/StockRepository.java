@@ -27,6 +27,39 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
             """)
     List<Stock> lockForUpdate(Sku sku, Collection<Long> locationIds);
 
+    /**
+     * Источники для аллокации: свободный остаток в доступных ячейках зоны отбора. Порядок по id
+     * места и SKU одинаков для всех вызовов, поэтому блокирующий вариант ниже захватывает строки
+     * без риска взаимной блокировки (§12.2).
+     */
+    @Query("""
+            select s from Stock s join fetch s.location l
+            where s.sku.id in :skuIds and l.warehouse.id = :warehouseId and l.active = true and l.blocked = false
+              and l.type = io.github.r0mbaa.wms.core.topology.LocationType.PICKING
+              and s.quantity > s.reservedQuantity
+            order by l.id, s.sku.id
+            """)
+    List<Stock> allocationCandidates(long warehouseId, Collection<Long> skuIds);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s from Stock s join fetch s.location l
+            where s.sku.id in :skuIds and l.warehouse.id = :warehouseId and l.active = true and l.blocked = false
+              and l.type = io.github.r0mbaa.wms.core.topology.LocationType.PICKING
+              and s.quantity > s.reservedQuantity
+            order by l.id, s.sku.id
+            """)
+    List<Stock> lockAllocationCandidates(long warehouseId, Collection<Long> skuIds);
+
+    /** Строки остатка под снятие резервов, заблокированные в том же порядке. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s from Stock s
+            where s.location.id in :locationIds and s.sku.id in :skuIds
+            order by s.location.id, s.sku.id
+            """)
+    List<Stock> lockPairs(Collection<Long> locationIds, Collection<Long> skuIds);
+
     @Query("""
             select s from Stock s join fetch s.sku
             where s.location = :location and s.quantity > 0

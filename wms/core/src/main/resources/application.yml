@@ -15,6 +15,9 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        # UPDATE при сбросе сессии идут в порядке первичных ключей: две конкурентные аллокации
+        # обновляют строки остатка в одном порядке и не блокируют друг друга взаимно.
+        order_updates: true
   docker:
     compose:
       # Путь от рабочего каталога bootRun, т.е. от wms/core.
@@ -34,6 +37,10 @@ wms:
     bootstrap:
       # Пароль первого администратора; создаётся, только если в БД ещё нет пользователей.
       password: ${WMS_ADMIN_PASSWORD:}
+  allocation:
+    # Срок жизни резерва заказа, ещё не вошедшего в задание (FR-M6-04).
+    reservation-ttl: 4h
+    expiry-check: PT1M
 
 management:
   endpoints:

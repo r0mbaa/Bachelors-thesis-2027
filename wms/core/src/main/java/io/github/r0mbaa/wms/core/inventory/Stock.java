@@ -15,8 +15,9 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 
 /**
- * Остаток SKU в месте хранения (FR-M4-01). Меняется только через {@link StockLedger}, вместе с
- * записью движения. Строка создаётся при первом приходе и остаётся с нулём после расхода.
+ * Остаток SKU в месте хранения (FR-M4-01). Количество меняется только через {@link StockLedger},
+ * вместе с записью движения. Резерв меняет аллокация: движения он не порождает, но свободную
+ * часть остатка уменьшает. Строка создаётся при первом приходе и остаётся с нулём после расхода.
  */
 @Entity
 @Table(name = "stock")
@@ -70,6 +71,25 @@ public class Stock {
 
     void add(int amount, Instant now) {
         quantity += amount;
+        updatedAt = now;
+    }
+
+    /** Закрепляет часть свободного остатка за заказом (FR-M6-03). */
+    public void reserve(int amount, Instant now) {
+        if (amount <= 0 || amount > available()) {
+            throw new ConflictException("В месте " + location.getCode() + " свободно " + available() + " "
+                    + sku.getUom() + " товара " + sku.getArticle() + ", а резервируется " + amount);
+        }
+        reservedQuantity += amount;
+        updatedAt = now;
+    }
+
+    public void release(int amount, Instant now) {
+        if (amount <= 0 || amount > reservedQuantity) {
+            throw new IllegalStateException("Снимается резерв " + amount + " при зарезервированных "
+                    + reservedQuantity + " в месте " + location.getCode());
+        }
+        reservedQuantity -= amount;
         updatedAt = now;
     }
 
