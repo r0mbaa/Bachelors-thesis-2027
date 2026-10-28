@@ -65,6 +65,11 @@ public class Allocation {
         this.expiresAt = expiresAt;
     }
 
+    /** @param expiresAt {@code null} — бессрочно, пока заказ в задании */
+    void expireAt(Instant expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
     void release(Instant now) {
         close(AllocationStatus.RELEASED, now);
     }

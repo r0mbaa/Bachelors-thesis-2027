@@ -164,7 +164,20 @@ public class AllocationService {
     /** Заказ вошёл в задание: его резервы больше не истекают. */
     @Transactional
     public void pin(CustomerOrder order) {
-        allocations.clearExpiry(order);
+        allocations.findActive(order).forEach(a -> a.expireAt(null));
+    }
+
+    /** Задание расформировано: срок жизни резервов заказа отсчитывается заново (FR-M6-04). */
+    @Transactional
+    public void unpin(CustomerOrder order) {
+        Instant expiresAt = clock.instant().plus(properties.reservationTtl());
+        allocations.findActive(order).forEach(a -> a.expireAt(expiresAt));
+    }
+
+    /** Активные резервы заказа, из которых строятся шаги задания. */
+    @Transactional(readOnly = true)
+    public List<Allocation> activeOf(CustomerOrder order) {
+        return allocations.findActive(order);
     }
 
     @Transactional(readOnly = true)

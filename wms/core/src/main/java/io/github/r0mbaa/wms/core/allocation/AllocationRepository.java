@@ -4,7 +4,6 @@ import io.github.r0mbaa.wms.core.order.CustomerOrder;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface AllocationRepository extends JpaRepository<Allocation, Long> {
@@ -30,12 +29,4 @@ public interface AllocationRepository extends JpaRepository<Allocation, Long> {
             """)
     List<Long> ordersWithExpired(Instant now);
 
-    /** Заказ вошёл в задание: его резервы больше не истекают. */
-    @Modifying
-    @Query("""
-            update Allocation a set a.expiresAt = null
-            where a.status = io.github.r0mbaa.wms.core.allocation.AllocationStatus.RESERVED
-              and a.orderLine in (select l from OrderLine l where l.order = :order)
-            """)
-    int clearExpiry(CustomerOrder order);
 }

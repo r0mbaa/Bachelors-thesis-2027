@@ -68,6 +68,15 @@ public class TopologyService {
         return warehouse;
     }
 
+    /** Виртуальное место без адреса на стеллаже: например, место тары сборщика. */
+    @Transactional
+    public Location createVirtualLocation(Warehouse warehouse, String code, LocationType type) {
+        if (locations.findByCode(code).isPresent()) {
+            throw new ConflictException("Место " + code + " уже существует");
+        }
+        return locations.save(Location.virtual(warehouse, code, type));
+    }
+
     @Transactional(readOnly = true)
     public List<Warehouse> warehouses() {
         return warehouses.findAllByOrderByCode();
