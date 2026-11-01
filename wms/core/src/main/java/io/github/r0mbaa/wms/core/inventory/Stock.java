@@ -93,6 +93,20 @@ public class Stock {
         updatedAt = now;
     }
 
+    /**
+     * Отбор по резерву: уходит отобранное, а резерв снимается целиком, в том числе его
+     * неотобранная часть при недостаче.
+     */
+    void consumeReserved(int picked, int reserved, Instant now) {
+        if (reserved > reservedQuantity || picked > reserved || picked > quantity) {
+            throw new IllegalStateException("Отбор " + picked + " по резерву " + reserved + " не сходится с остатком "
+                    + quantity + " и резервом " + reservedQuantity + " в месте " + location.getCode());
+        }
+        quantity -= picked;
+        reservedQuantity -= reserved;
+        updatedAt = now;
+    }
+
     /** Расход из свободной части остатка: зарезервированное под заказы трогать нельзя. */
     void remove(int amount, Instant now) {
         if (amount > available()) {

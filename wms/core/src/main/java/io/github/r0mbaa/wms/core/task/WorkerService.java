@@ -92,14 +92,13 @@ public class WorkerService {
     /**
      * Проверяет бейдж и PIN (FR-M10-02).
      *
-     * @return учётная запись сборщика, если PIN верен
+     * @return имя пользователя сборщика, если PIN верен
      */
     @Transactional(readOnly = true)
-    public Optional<AppUser> authenticate(String badge, String pin) {
+    public Optional<String> authenticate(String badge, String pin) {
         return workers.findByCode(codeOf(badge))
                 .filter(worker -> pin != null && passwordEncoder.matches(pin, worker.getPinHash()))
-                .map(Worker::getUser)
-                .filter(AppUser::isEnabled);
+                .map(worker -> worker.getUser().getUsername());
     }
 
     private String encodePin(String pin) {

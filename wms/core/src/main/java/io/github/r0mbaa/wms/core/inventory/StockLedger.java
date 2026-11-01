@@ -103,6 +103,37 @@ public class StockLedger {
     }
 
     /**
+     * Отбор по резерву (FR-M10-11): отобранное переходит из ячейки в тару движением {@code PICK},
+     * а резерв строки снимается целиком. Если отобрано меньше резерва (недостача, повреждение,
+     * недоступная ячейка), неотобранное остаётся в ячейке свободным.
+     *
+     * @param picked   отобрано; 0 — ничего, тогда движения нет, только снимается резерв
+     * @param reserved резерв, который закрывает этот отбор
+     * @return движение отбора или пусто, если ничего не отобрано
+     */
+    @Transactional
+    public Optional<Movement> pick(Location from, Location container, Sku sku, int picked, int reserved,
+            DocumentRef document, String comment) {
+        if (picked < 0 || picked > reserved) {
+            throw new IllegalArgumentException("Отобрано " + picked + ", а по заданию требуется не больше " + reserved);
+        }
+        if (picked > 0 && from.isBlocked()) {
+            throw new ConflictException("Ячейка " + from.getCode() + " заблокирована (" + from.getBlockReason()
+                    + "): отбор из неё невозможен, зарегистрируйте исключение «ячейка недоступна»");
+        }
+        Instant now = clock.instant();
+        List<Stock> rows = lockRows(sku, from, picked > 0 ? container : null);
+        row(rows, from).orElseThrow(() -> new IllegalStateException("Нет строки остатка под резерв в " + from.getCode()))
+                .consumeReserved(picked, reserved, now);
+        if (picked == 0) {
+            return Optional.empty();
+        }
+        row(rows, container).orElseThrow().add(picked, now);
+        return Optional.of(movements.save(new Movement(MovementType.PICK, sku, picked, from, container, document,
+                currentUser.username(), now, comment)));
+    }
+
+    /**
      * Приводит учётный остаток к фактическому по результату пересчёта одним движением
      * {@code ADJUSTMENT} (§15.4: ручная корректировка с актом).
      *

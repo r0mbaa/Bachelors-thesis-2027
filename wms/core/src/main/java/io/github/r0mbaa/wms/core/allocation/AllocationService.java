@@ -174,6 +174,15 @@ public class AllocationService {
         allocations.findActive(order).forEach(a -> a.expireAt(expiresAt));
     }
 
+    /**
+     * Закрывает резерв по итогам отбора: {@code PICKED}, если что-то отобрано, иначе {@code FAILED}.
+     * Строки остатка при этом меняет проводка отбора в {@code StockLedger}.
+     */
+    @Transactional
+    public void settle(Allocation allocation, int picked) {
+        allocation.pick(picked, clock.instant());
+    }
+
     /** Активные резервы заказа, из которых строятся шаги задания. */
     @Transactional(readOnly = true)
     public List<Allocation> activeOf(CustomerOrder order) {

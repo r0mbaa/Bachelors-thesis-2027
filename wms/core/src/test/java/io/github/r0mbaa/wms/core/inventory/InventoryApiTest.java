@@ -144,6 +144,14 @@ class InventoryApiTest {
     }
 
     @Test
+    void missingQuantityIsReportedAsFieldToFix() {
+        assertThat(mvc.post().uri("/api/v1/inventory/transfers").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"sku\": \"A\", \"from\": \"X\", \"to\": \"Y\"}"))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson().extractingPath("$.errors[*].field").asArray().containsExactly("quantity");
+    }
+
+    @Test
     @WithMockUser(roles = "PICKER")
     void pickerCannotMoveStockByHand() {
         assertThat(transfer("A", cell(1, 1, 1, 1), cell(2, 1, 1, 1), 1)).hasStatus(HttpStatus.FORBIDDEN);

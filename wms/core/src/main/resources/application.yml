@@ -26,6 +26,12 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  jackson:
+    deserialization:
+      # Jackson 3 по умолчанию отвергает пропущенное поле-примитив целиком («тело не разобрано»).
+      # Пропущенный флаг должен значить false, а пропущенное обязательное число — дойти до Bean
+      # Validation и вернуться ошибкой конкретного поля.
+      fail-on-null-for-primitives: false
 
 server:
   port: 8080

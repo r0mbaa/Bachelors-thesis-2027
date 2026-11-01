@@ -1,11 +1,13 @@
 package io.github.r0mbaa.wms.core.admin;
 
+import java.util.Collection;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-/** Имя того, кто выполняет операцию: для журнала движений и аудита. */
+/** Кто выполняет операцию: для журнала движений, аудита и проверок, зависящих от роли. */
 @Component
 public class CurrentUser {
 
@@ -19,5 +21,12 @@ public class CurrentUser {
             return SYSTEM;
         }
         return authentication.getName();
+    }
+
+    public boolean hasAnyRole(Collection<Role> roles) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> roles.stream().anyMatch(role -> authority.equals("ROLE_" + role.name())));
     }
 }

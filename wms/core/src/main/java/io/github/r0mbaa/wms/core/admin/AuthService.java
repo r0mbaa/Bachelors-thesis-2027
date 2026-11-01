@@ -92,6 +92,15 @@ public class AuthService {
         refreshTokens.findByTokenHash(hash(refreshToken)).ifPresent(token -> token.revoke(clock.instant()));
     }
 
+    /** Выдача токенов пользователю, уже прошедшему проверку другим способом: бейдж и PIN сборщика. */
+    @Transactional
+    public TokenPair issueTokens(String username) {
+        AppUser user = users.findByUsername(username)
+                .filter(AppUser::isEnabled)
+                .orElseThrow(() -> new BadCredentialsException(INVALID_CREDENTIALS));
+        return issue(user);
+    }
+
     private TokenPair issue(AppUser user) {
         Instant now = clock.instant();
         JwtClaimsSet claims = JwtClaimsSet.builder()
