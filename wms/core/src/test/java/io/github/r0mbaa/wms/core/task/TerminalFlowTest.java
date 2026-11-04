@@ -1,6 +1,7 @@
 package io.github.r0mbaa.wms.core.task;
 
 import static io.github.r0mbaa.wms.core.support.Fixture.cell;
+import static io.github.r0mbaa.wms.core.support.RunAs.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.r0mbaa.wms.core.admin.Role;
@@ -28,9 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -210,12 +208,12 @@ class TerminalFlowTest {
         tasks.create(Fixture.WH, List.of("SO-3"), "C2");
         registerPicker("picker2", "P2");
         for (String picker : List.of("picker1", "picker2")) {
-            as(picker, () -> terminal.startShift());
+            as(picker, Role.PICKER, () -> terminal.startShift());
         }
 
         List<Callable<Optional<TerminalView>>> claims = new ArrayList<>();
         for (String picker : List.of("picker1", "picker2")) {
-            claims.add(() -> as(picker, () -> terminal.claimNext()));
+            claims.add(() -> as(picker, Role.PICKER, () -> terminal.claimNext()));
         }
         List<String> claimed = new ArrayList<>();
         try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
@@ -264,15 +262,5 @@ class TerminalFlowTest {
                 .filter(s -> s.getSku().getArticle().equals(article))
                 .mapToInt(Stock::getQuantity)
                 .sum();
-    }
-
-    private static <T> T as(String username, java.util.function.Supplier<T> action) {
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, null,
-                List.of(new SimpleGrantedAuthority("ROLE_PICKER"))));
-        try {
-            return action.get();
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
     }
 }

@@ -2,6 +2,8 @@ package io.github.r0mbaa.wms.core.inventory;
 
 import io.github.r0mbaa.wms.core.catalog.CatalogService;
 import io.github.r0mbaa.wms.core.inventory.StockLedger.Posting;
+import io.github.r0mbaa.wms.core.topology.Location;
+import io.github.r0mbaa.wms.core.topology.LocationType;
 import io.github.r0mbaa.wms.core.topology.TopologyService;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -41,27 +43,39 @@ public class InventoryService {
     @Transactional
     public Movement place(String skuCode, String locationCode, int quantity, String comment) {
         return ledger.post(new Posting(MovementType.RECEIPT, catalog.resolve(skuCode), quantity, null,
-                topology.resolveLocation(locationCode), new DocumentRef("PLACEMENT", null), comment));
+                storage(locationCode), new DocumentRef("PLACEMENT", null), comment));
     }
 
     /** Перемещение между ячейками (FR-M4-09, FR-M15-14, FR-M15-15). */
     @Transactional
     public Movement transfer(String skuCode, String fromCode, String toCode, int quantity, String comment) {
         return ledger.post(new Posting(MovementType.TRANSFER, catalog.resolve(skuCode), quantity,
-                topology.resolveLocation(fromCode), topology.resolveLocation(toCode), DocumentRef.manual(), comment));
+                storage(fromCode), storage(toCode), DocumentRef.manual(), comment));
     }
 
     @Transactional
     public Movement adjust(String skuCode, String locationCode, int actualQuantity, String reason) {
-        return ledger.adjustTo(topology.resolveLocation(locationCode), catalog.resolve(skuCode), actualQuantity,
+        return ledger.adjustTo(storage(locationCode), catalog.resolve(skuCode), actualQuantity,
                 new DocumentRef("ADJUSTMENT_ACT", null), requireReason(reason));
     }
 
     @Transactional
     public Movement writeOff(String skuCode, String locationCode, int quantity, String reason) {
         return ledger.post(new Posting(MovementType.WRITE_OFF, catalog.resolve(skuCode), quantity,
-                topology.resolveLocation(locationCode), null, new DocumentRef("WRITE_OFF_ACT", null),
-                requireReason(reason)));
+                storage(locationCode), null, new DocumentRef("WRITE_OFF_ACT", null), requireReason(reason)));
+    }
+
+    /**
+     * Ручные операции допустимы только с ячейками и зоной приёмки. Тара и зона отгрузки держат
+     * отобранное, но не отгруженное (INV-09), и меняются только сборкой и отгрузкой.
+     */
+    private Location storage(String code) {
+        Location location = topology.resolveLocation(code);
+        if (!location.isCell() && location.getType() != LocationType.RECEIVING) {
+            throw new IllegalArgumentException("Место " + location.getCode() + " (" + location.getType()
+                    + ") меняется только сборкой и отгрузкой: вручную работайте с ячейками и зоной приёмки");
+        }
+        return location;
     }
 
     @Transactional(readOnly = true)
