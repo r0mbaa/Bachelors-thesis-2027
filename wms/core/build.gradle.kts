@@ -15,6 +15,8 @@ dependencies {
     implementation(libs.spring.boot.starter.security)
     // Проверка JWT на каждом запросе (NFR-SEC-01); токены выпускает сам core, внешнего IdP нет.
     implementation(libs.spring.boot.starter.security.oauth2.resource.server)
+    // OpenAPI 3.1 по коду контроллеров (NFR-M-07): /v3/api-docs и /swagger-ui.html.
+    implementation(libs.springdoc.openapi.webmvc.ui)
     runtimeOnly(libs.flyway.database.postgresql)
     runtimeOnly(libs.postgresql)
 

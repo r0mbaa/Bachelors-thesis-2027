@@ -5,6 +5,8 @@ spring-boot = "4.1.1"
 junit = "6.0.3"
 assertj = "3.27.7"
 jqwik = "1.10.1"
+# Линейка 3.x — для Spring Boot 4; BOM Boot её не содержит.
+springdoc = "3.1.1"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -20,6 +22,8 @@ spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+
+springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 # Версии PostgreSQL-драйвера, Flyway и Testcontainers управляются BOM Spring Boot.
 postgresql = { module = "org.postgresql:postgresql" }
