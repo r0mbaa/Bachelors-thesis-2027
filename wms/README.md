@@ -27,6 +27,16 @@ flowchart BT
 
 Развёртываются два сервиса, `core` и `planner`, как в §12.2. Библиотеки на граф развёртывания не влияют.
 
+## Состояние
+
+| Часть | Готово | Дальше |
+| --- | --- | --- |
+| `shared` | Код ячейки с контрольным символом, QR-нагрузка | Контракт планировщика §12.4 |
+| `layout` | Модель планировки, генерация ячеек с координатами и вместимостью | Граф, валидация, классификатор, мастер |
+| `core` | Весь учётный путь: приёмка → размещение → заказ → резерв → задание → терминал → отгрузка; пользователи и роли, аудит, OpenAPI | Печатные формы, слоттинг, монитор по WebSocket, вызов планировщика |
+| `planner-engine`, `planner`, `research` | Каркас | Алгоритмы §9, стенд экспериментов |
+| `web`, `terminal` | — | Конструктор, 3D-сцена, PWA-терминал |
+
 ## Отступления от спецификации
 
 **1. Библиотеки `layout` и `planner-engine` (§12.1 называет четыре модуля).** Граф склада нужен трём потребителям: конструктору в `core` (валидация связности, FR-M15-07), планировщику и стенду `research`, у которого нет БД. Вариант «граф строит `planner`, а `core` зовёт его по REST» делает конструктор зависимым от доступности планировщика, хотя NFR-R-05 требует обратного. Вариант «`research` зависит от `planner`» тянет в стенд Spring Boot и Tomcat, а JMH начинает мерить окружение вместо алгоритма. Поэтому вычисления вынесены в чистые библиотеки, а сервисы стали тонкими обёртками. Граница `core` / `planner` из §12.2 при этом не меняется.
@@ -50,7 +60,7 @@ flowchart BT
 | M7 | Батчинг | [`engine.batching`](planner-engine/src/main/java/io/github/r0mbaa/wms/engine/batching) |
 | M8 | Маршрутизация | [`engine.routing`](planner-engine/src/main/java/io/github/r0mbaa/wms/engine/routing) + [`engine.distance`](planner-engine/src/main/java/io/github/r0mbaa/wms/engine/distance) |
 | M9 | Диспетчеризация заданий | [`core.task`](core/src/main/java/io/github/r0mbaa/wms/core/task) + [`engine.dispatch`](planner-engine/src/main/java/io/github/r0mbaa/wms/engine/dispatch) |
-| M10 | Мобильный терминал сборщика | [`terminal/`](terminal) |
+| M10 | Мобильный терминал сборщика | серверная часть — [`core.task`](core/src/main/java/io/github/r0mbaa/wms/core/task), клиент — [`terminal/`](terminal) |
 | M11 | Отгрузка и документы | [`core.shipping`](core/src/main/java/io/github/r0mbaa/wms/core/shipping) |
 | M12 | Слоттинг и аналитика (ML) | [`engine.slotting`](planner-engine/src/main/java/io/github/r0mbaa/wms/engine/slotting) |
 | M13 | Администрирование | [`core.admin`](core/src/main/java/io/github/r0mbaa/wms/core/admin) |
@@ -71,6 +81,8 @@ cd wms
 ./gradlew :core:bootRun    # учётное ядро на :8080, /actuator/health
 ./gradlew :planner:bootRun # планировщик на :8081
 ```
+
+Запуск учётного ядра, переменные окружения и первый вход описаны в [`core/README.md`](core/README.md). Сборку и тесты при каждом пуше выполняет GitHub Actions ([`.github/workflows/build.yml`](../.github/workflows/build.yml)).
 
 Для `core` нужен запущенный Docker. Интеграционные тесты поднимают PostgreSQL 16 через Testcontainers, а `bootRun` сам запускает его из [`docker-compose.yml`](docker-compose.yml). Встраиваемая БД не подходит, потому что инварианты учёта держатся на CHECK-ограничениях, триггерах и блокировках строк PostgreSQL (§12.2).
 
