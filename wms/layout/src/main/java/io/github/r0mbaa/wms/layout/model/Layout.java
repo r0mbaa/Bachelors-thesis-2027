@@ -67,4 +67,25 @@ public record Layout(
     public double rowDepth(RackRow row) {
         return row.sections().stream().mapToDouble(name -> profile(name).depth()).max().orElseThrow();
     }
+
+    /** Длина ряда вдоль лицевой линии: сумма ширин секций. */
+    public double rowLength(RackRow row) {
+        return row.sections().stream().mapToDouble(name -> profile(name).sectionWidth()).sum();
+    }
+
+    /** Габарит ряда на плане: его занимают стеллажи, ходить здесь нельзя. */
+    public Rect footprint(RackRow row) {
+        double x = row.origin().x();
+        double y = row.origin().y();
+        double along = rowLength(row);
+        double depth = rowDepth(row);
+        return row.facing().runsAlongX()
+                ? new Rect(x, y, x + along, y + depth)
+                : new Rect(x, y, x + depth, y + along);
+    }
+
+    /** Границы склада. */
+    public Rect bounds() {
+        return new Rect(0, 0, width, length);
+    }
 }
