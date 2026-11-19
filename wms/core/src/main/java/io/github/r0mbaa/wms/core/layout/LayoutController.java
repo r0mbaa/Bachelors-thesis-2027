@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,21 @@ class LayoutController {
     @PreAuthorize("hasRole('WAREHOUSE_ADMIN')")
     SaveResult save(@PathVariable String code, @RequestBody Layout layout) {
         return layouts.save(code, layout);
+    }
+
+    /**
+     * Проверка без сохранения (FR-M15-07, FR-M15-03c): замечания с местами на плане и что
+     * изменится в ячейках. Конструктор вызывает её при каждом изменении плана.
+     */
+    @PostMapping("/check")
+    LayoutService.LayoutCheck check(@PathVariable String code, @RequestBody Layout layout) {
+        return layouts.check(code, layout);
+    }
+
+    /** Граф текущей версии (FR-M15-06): для наложения на план и для планировщика. */
+    @GetMapping("/graph")
+    GraphView graph(@PathVariable String code) {
+        return GraphView.from(layouts.graph(code));
     }
 
     @GetMapping("/versions")

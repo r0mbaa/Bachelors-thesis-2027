@@ -36,6 +36,13 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return problem(HttpStatus.CONFLICT, "Операция невозможна", e.getMessage());
     }
 
+    @ExceptionHandler(ValidationFailedException.class)
+    ProblemDetail validationFailed(ValidationFailedException e) {
+        ProblemDetail body = problem(HttpStatus.UNPROCESSABLE_CONTENT, "Документ не прошёл проверку", e.getMessage());
+        body.setProperty("issues", e.getIssues());
+        return body;
+    }
+
     /** Так сообщают об ошибке ввода value-типы: {@code LocationCode}, {@code QrPayload}, модель планировки. */
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail badRequest(IllegalArgumentException e) {
