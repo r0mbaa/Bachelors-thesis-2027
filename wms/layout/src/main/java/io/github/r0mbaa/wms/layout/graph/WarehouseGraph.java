@@ -3,10 +3,13 @@ package io.github.r0mbaa.wms.layout.graph;
 import io.github.r0mbaa.wms.shared.marking.LocationCode;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Граф склада {@code G = (V, E, w)} (§8.1), выведенный из планировки. Рёбра лежат на осях
@@ -60,6 +63,35 @@ public record WarehouseGraph(
             adjacency.get(edge.to()).add(new GraphEdge(edge.to(), edge.from(), edge.length()));
         }
         return adjacency;
+    }
+
+    /**
+     * Кратчайшие расстояния по графу от узла до всех остальных (Дейкстра на двоичной куче).
+     * Недостижимые узлы получают {@code +∞}. Полная матрица расстояний с кэшем строится в
+     * {@code planner-engine}; здесь — одиночный источник, например депо для правил размещения.
+     */
+    public double[] distancesFrom(int source) {
+        List<List<GraphEdge>> adjacency = adjacency();
+        double[] dist = new double[nodes.size()];
+        Arrays.fill(dist, Double.POSITIVE_INFINITY);
+        dist[source] = 0;
+        PriorityQueue<double[]> queue = new PriorityQueue<>(Comparator.comparingDouble(entry -> entry[1]));
+        queue.add(new double[] {source, 0});
+        while (!queue.isEmpty()) {
+            double[] top = queue.poll();
+            int node = (int) top[0];
+            if (top[1] > dist[node]) {
+                continue;
+            }
+            for (GraphEdge edge : adjacency.get(node)) {
+                double candidate = dist[node] + edge.length();
+                if (candidate < dist[edge.to()]) {
+                    dist[edge.to()] = candidate;
+                    queue.add(new double[] {edge.to(), candidate});
+                }
+            }
+        }
+        return dist;
     }
 
     /** Узлы, достижимые из депо: проверка связности планировки (FR-M15-07). */

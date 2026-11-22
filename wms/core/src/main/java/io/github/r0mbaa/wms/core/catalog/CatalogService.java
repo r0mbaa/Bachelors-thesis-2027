@@ -54,6 +54,16 @@ public class CatalogService {
         return sku;
     }
 
+    /** Ручная установка классов ABC/XYZ (FR-M2-05) для подготовки сценариев. */
+    @Transactional
+    public Sku classify(String article, String abc, String xyz) {
+        Sku sku = get(article);
+        SkuView before = SkuView.from(sku);
+        sku.classify(abc, xyz);
+        audit.record("SKU_CLASSIFIED", AUDIT_ENTITY, sku.getArticle(), before, SkuView.from(sku));
+        return sku;
+    }
+
     @Transactional
     public Sku addBarcode(String article, BarcodeSpec barcode) {
         Sku sku = get(article);

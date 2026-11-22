@@ -25,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 class InventoryController {
 
     private final InventoryService inventory;
+    private final StockFillService fillService;
 
-    InventoryController(InventoryService inventory) {
+    InventoryController(InventoryService inventory, StockFillService fillService) {
         this.inventory = inventory;
+        this.fillService = fillService;
     }
 
     @GetMapping("/locations/{code}/stock")
@@ -88,6 +90,17 @@ class InventoryController {
     MovementView writeOff(@Valid @RequestBody WriteOffRequest request) {
         return MovementView.from(inventory.writeOff(request.sku(), request.location(), request.quantity(),
                 request.reason()));
+    }
+
+    /**
+     * Массовое заполнение склада по правилу (FR-M15-16) для подготовки сценариев.
+     * {@code dryRun=true} только показывает, куда что ляжет.
+     */
+    @PostMapping("/warehouses/{code}/fill")
+    @PreAuthorize("hasRole('WAREHOUSE_ADMIN')")
+    StockFillService.FillResult fill(@PathVariable String code, @RequestBody StockFillService.FillRequest request,
+            @RequestParam(defaultValue = "false") boolean dryRun) {
+        return fillService.fill(code, request, dryRun);
     }
 
     /** INV-04: пустой список — остатки совпадают с журналом. */

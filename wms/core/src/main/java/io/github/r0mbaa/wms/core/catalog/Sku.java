@@ -16,6 +16,7 @@ import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Единица номенклатуры (FR-M2-01, FR-M2-02). Идентифицирует вид товара, а не экземпляр: QR
@@ -96,6 +97,30 @@ public class Sku {
         this.weightKg = weightKg;
         this.volumeM3 = volume;
         this.storageClass = storageClass;
+    }
+
+    /**
+     * Классы ABC и XYZ (FR-M2-05). Рассчитываются по истории отборов; вручную задаются для
+     * подготовки сценариев, пока истории нет.
+     *
+     * @param abc {@code A}, {@code B}, {@code C} или {@code null}
+     * @param xyz {@code X}, {@code Y}, {@code Z} или {@code null}
+     */
+    void classify(String abc, String xyz) {
+        this.abcClass = requireClass("ABC", abc, "ABC");
+        this.xyzClass = requireClass("XYZ", xyz, "XYZ");
+    }
+
+    private static String requireClass(String what, String value, String allowed) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.strip().toUpperCase(Locale.ROOT);
+        if (normalized.length() != 1 || allowed.indexOf(normalized.charAt(0)) < 0) {
+            throw new IllegalArgumentException("Класс " + what + " '" + value + "' недопустим: ожидается одна из букв "
+                    + String.join(", ", allowed.split("")));
+        }
+        return normalized;
     }
 
     void addBarcode(String barcode, BarcodeType type) {

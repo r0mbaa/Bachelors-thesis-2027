@@ -64,6 +64,13 @@ class SkuController {
         return SkuView.from(catalog.update(article, request.description()));
     }
 
+    /** Классы ABC/XYZ вручную (FR-M2-05); пустое значение снимает класс. */
+    @PutMapping("/{article}/classes")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_ADMIN', 'ANALYST')")
+    SkuView classify(@PathVariable String article, @RequestBody ClassesRequest request) {
+        return SkuView.from(catalog.classify(article, request.abc(), request.xyz()));
+    }
+
     @PostMapping("/{article}/barcodes")
     @PreAuthorize("hasRole('WAREHOUSE_ADMIN')")
     SkuView addBarcode(@PathVariable String article, @Valid @RequestBody BarcodeRequest request) {
@@ -106,6 +113,9 @@ class SkuController {
         SkuDescription description() {
             return new SkuDescription(name, uom, lengthM, widthM, heightM, weightKg, volumeM3, storageClass);
         }
+    }
+
+    record ClassesRequest(String abc, String xyz) {
     }
 
     record BarcodeRequest(@NotBlank String barcode, @NotNull BarcodeType type) {

@@ -61,6 +61,14 @@ class GraphProperties {
         }
     }
 
+    /** Рабочий поиск кратчайших путей совпадает с независимой реализацией в тестах. */
+    @Property(tries = 100)
+    void libraryDistancesMatchReferenceDijkstra(@ForAll("layouts") Layout layout) {
+        WarehouseGraph graph = GraphBuilder.build(layout);
+
+        assertThat(graph.distancesFrom(0)).containsExactly(Distances.from(graph, 0));
+    }
+
     @Provide
     Arbitrary<Layout> layouts() {
         return Combinators.combine(
