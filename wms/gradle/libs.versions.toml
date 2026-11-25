@@ -7,6 +7,10 @@ assertj = "3.27.7"
 jqwik = "1.10.1"
 # Линейка 3.x — для Spring Boot 4; BOM Boot её не содержит.
 springdoc = "3.1.1"
+pdfbox = "3.0.8"
+zxing = "3.5.4"
+# DejaVu Sans для кириллицы в PDF: свободная лицензия, шрифт приходит зависимостью, а не бинарником в репозитории.
+dejavu-fonts = "2.29"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
@@ -24,6 +28,10 @@ spring-boot-starter-security-test = { module = "org.springframework.boot:spring-
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 
 springdoc-openapi-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing" }
+dejavu-fonts = { module = "net.sourceforge.jeuclid:dejavu-fonts", version.ref = "dejavu-fonts" }
 
 # Версии PostgreSQL-драйвера, Flyway и Testcontainers управляются BOM Spring Boot.
 postgresql = { module = "org.postgresql:postgresql" }

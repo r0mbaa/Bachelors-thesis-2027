@@ -18,6 +18,7 @@ Spring Boot, Java 25. Stateful: владеет PostgreSQL. Профиль — I/
 | [`allocation/`](src/main/java/io/github/r0mbaa/wms/core/allocation) | M6 Резервирование | FR-M6-01 .. 06 |
 | [`task/`](src/main/java/io/github/r0mbaa/wms/core/task) | M9, M10 Тара, сборщики, задания, терминал | FR-M9-01 .. 09, FR-M10-01 .. 12 |
 | [`shipping/`](src/main/java/io/github/r0mbaa/wms/core/shipping) | M11 Консолидация и отгрузка | FR-M11-01 .. 07 |
+| [`print/`](src/main/java/io/github/r0mbaa/wms/core/print) | Печатные формы | FR-M1-12, FR-M11-03 |
 | [`common/`](src/main/java/io/github/r0mbaa/wms/core/common) | — | Формат ошибок, страницы списков, часы, расписание, OpenAPI |
 
 В каждом пакете есть README: что реализовано, какие решения приняты и что отложено.
