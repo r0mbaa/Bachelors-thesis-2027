@@ -62,7 +62,7 @@ cd wms
 WMS_ADMIN_PASSWORD=<пароль> ./gradlew :core:bootRun
 ```
 
-`bootRun` сам поднимает PostgreSQL из `docker-compose.yml`, Flyway накатывает схему, а на пустой БД создаётся пользователь `admin` с этим паролем. Вход — `POST /api/v1/auth/login`. Описание API — `/swagger-ui.html` (OpenAPI 3.1, NFR-M-07).
+`bootRun` сам поднимает PostgreSQL из `docker-compose.dev.yml`, Flyway накатывает схему, а на пустой БД создаётся пользователь `admin` с этим паролем. Вход — `POST /api/v1/auth/login`. Описание API — `/swagger-ui.html` (OpenAPI 3.1, NFR-M-07).
 
 | Переменная | Назначение |
 | --- | --- |

@@ -1,0 +1,10 @@
+**/build/
+**/.gradle/
+**/.kotlin/
+**/node_modules/
+**/dist/
+**/.jqwik-database
+analysis/
+web/
+terminal/
+.env

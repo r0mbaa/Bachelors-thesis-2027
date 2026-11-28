@@ -32,3 +32,15 @@ jobs:
         with:
           name: test-reports
           path: wms/**/build/reports/tests/
+
+  # Образы собираются так же, как на стенде: docker compose up не должен падать на сборке.
+  images:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wms
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Сборка образов core и planner
+        run: docker compose build

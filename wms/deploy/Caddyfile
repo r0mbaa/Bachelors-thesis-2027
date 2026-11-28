@@ -1,0 +1,40 @@
+# Точка входа стенда: HTTPS и маршрутизация к сервисам.
+{
+	# Собственный удостоверяющий центр Caddy: сертификат выдаётся сразу, без интернета и без
+	# ручного выпуска. Работает и для IP-адреса в локальной сети.
+	local_certs
+}
+
+{$WMS_HOST:localhost} {
+	tls internal
+	encode gzip
+
+	@core path /api/* /actuator/health* /v3/api-docs* /swagger-ui*
+	handle @core {
+		reverse_proxy core:8080
+	}
+
+	# Проверка предусловия §1.5: камера телефона открывается и распознаёт QR.
+	handle /check* {
+		root * /srv
+		file_server
+	}
+
+	# Веб-панель и терминал встанут сюда, когда появятся.
+	handle {
+		redir * /check/
+	}
+}
+
+# По HTTP отдаётся только корневой сертификат: телефон должен сначала ему довериться.
+http://{$WMS_HOST:localhost} {
+	handle /ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		file_server
+	}
+	handle {
+		redir https://{host}{uri}
+	}
+}

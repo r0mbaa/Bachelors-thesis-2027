@@ -1,6 +1,20 @@
-# Окружение разработки. `./gradlew :core:bootRun` поднимает его сам (spring-boot-docker-compose),
-# вручную: `docker compose up -d`. Сервисы core, planner и TLS-прокси добавляются сюда же,
-# когда появятся их образы (NFR-M-05, NFR-SEC-07).
+# Стенд целиком одной командой (NFR-M-05):
+#   docker compose up --build
+# Система открывается по HTTPS сразу (NFR-SEC-05, NFR-SEC-07): без защищённого соединения браузер
+# телефона не даёт доступ к камере, и сканирование QR не работает (§1.5).
+#
+# С телефона: задайте WMS_HOST — IP компьютера в локальной сети, например WMS_HOST=192.168.1.20,
+# откройте http://<WMS_HOST>/ca.crt, установите корневой сертификат как доверенный и перейдите
+# на https://<WMS_HOST>/check/ — страница проверки камеры и распознавания QR.
+#
+# Переменные (файл .env рядом с этим файлом или окружение):
+#   WMS_HOST            имя или IP, под которым стенд виден в сети; по умолчанию localhost
+#   WMS_ADMIN_PASSWORD  пароль пользователя admin, создаётся на пустой БД
+#   WMS_JWT_SECRET      ключ подписи токенов, Base64 от 32 байт; пусто — новый ключ на каждый запуск
+#   WMS_HTTP_PORT, WMS_HTTPS_PORT  если 80 и 443 на машине заняты
+#
+# Для разработки с ./gradlew :core:bootRun используется docker-compose.dev.yml (только PostgreSQL).
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,10 +22,64 @@ services:
       POSTGRES_DB: wms
       POSTGRES_USER: wms
       POSTGRES_PASSWORD: wms
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wms -d wms"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  core:
+    build:
+      context: .
+      args:
+        SERVICE: core
+    environment:
+      WMS_DB_URL: jdbc:postgresql://postgres:5432/wms
+      WMS_DB_USER: wms
+      WMS_DB_PASSWORD: wms
+      WMS_ADMIN_PASSWORD: ${WMS_ADMIN_PASSWORD:-change-me-now}
+      WMS_JWT_SECRET: ${WMS_JWT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
+
+  planner:
+    build:
+      context: .
+      args:
+        SERVICE: planner
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
+
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      WMS_HOST: ${WMS_HOST:-localhost}
+    ports:
+      - "${WMS_HTTP_PORT:-80}:80"
+      - "${WMS_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/check:/srv/check:ro
+      - caddy-data:/data
+    depends_on:
+      core:
+        condition: service_healthy
 
 volumes:
   pgdata:
+  # Здесь лежит локальный удостоверяющий центр Caddy: пока том жив, телефону не нужно заново
+  # доверять корневому сертификату.
+  caddy-data:

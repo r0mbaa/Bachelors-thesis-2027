@@ -1,0 +1,17 @@
+# Окружение разработки: только PostgreSQL. `./gradlew :core:bootRun` поднимает его сам
+# (spring-boot-docker-compose), вручную: `docker compose -f docker-compose.dev.yml up -d`.
+# Стенд целиком — docker-compose.yml.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wms
+      POSTGRES_USER: wms
+      POSTGRES_PASSWORD: wms
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+
+volumes:
+  pgdata-dev:

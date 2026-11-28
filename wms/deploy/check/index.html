@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Проверка камеры</title>
+  <style>
+    :root { color-scheme: light dark; --ok: #1a7f37; --bad: #c62828; --muted: #6b7280; }
+    body { margin: 0; padding: 16px; font: 17px/1.45 system-ui, sans-serif; background: Canvas; color: CanvasText; }
+    h1 { font-size: 22px; margin: 0 0 12px; }
+    .row { margin: 8px 0; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .bad { color: var(--bad); font-weight: 600; }
+    .muted { color: var(--muted); font-size: 15px; }
+    button { min-height: 56px; width: 100%; font-size: 18px; margin: 12px 0; border-radius: 10px; border: 0;
+             background: #2563eb; color: #fff; }
+    video { width: 100%; max-height: 50vh; background: #000; border-radius: 10px; }
+    #code { font: 600 20px/1.3 ui-monospace, monospace; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Проверка камеры и QR</h1>
+  <p class="muted">Предусловие §1.5: браузер даёт доступ к камере только по HTTPS. Откройте эту страницу
+    с того телефона, который будет на терминале.</p>
+  <div class="row">Защищённое соединение: <span id="secure"></span></div>
+  <div class="row">Распознавание QR в браузере: <span id="detector"></span></div>
+  <button id="start">Включить камеру</button>
+  <video id="video" playsinline muted hidden></video>
+  <div class="row">Отсканировано: <span id="code" class="muted">—</span></div>
+
+  <script>
+    const secure = document.getElementById('secure');
+    const detectorState = document.getElementById('detector');
+    const video = document.getElementById('video');
+    const code = document.getElementById('code');
+
+    secure.textContent = window.isSecureContext ? 'да' : 'нет — откройте страницу по https://';
+    secure.className = window.isSecureContext ? 'ok' : 'bad';
+
+    const hasDetector = 'BarcodeDetector' in window;
+    detectorState.textContent = hasDetector ? 'есть' : 'нет в этом браузере (камера всё равно проверяется)';
+    detectorState.className = hasDetector ? 'ok' : 'muted';
+
+    document.getElementById('start').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        video.hidden = false;
+        await video.play();
+        code.textContent = 'камера работает, наведите на QR';
+        if (hasDetector) {
+          const detector = new BarcodeDetector({ formats: ['qr_code'] });
+          const scan = async () => {
+            const found = await detector.detect(video).catch(() => []);
+            if (found.length) {
+              code.textContent = found[0].rawValue;
+              code.className = 'ok';
+            }
+            requestAnimationFrame(scan);
+          };
+          scan();
+        }
+      } catch (e) {
+        code.textContent = 'камера недоступна: ' + e.name + (window.isSecureContext ? '' : ' — нужен HTTPS');
+        code.className = 'bad';
+      }
+    });
+  </script>
+</body>
+</html>

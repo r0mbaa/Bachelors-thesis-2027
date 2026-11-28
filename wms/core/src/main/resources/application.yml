@@ -21,7 +21,7 @@ spring:
   docker:
     compose:
       # Путь от рабочего каталога bootRun, т.е. от wms/core.
-      file: ../docker-compose.yml
+      file: ../docker-compose.dev.yml
       lifecycle-management: start-only
   mvc:
     problemdetails:
