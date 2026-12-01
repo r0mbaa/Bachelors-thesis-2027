@@ -1,6 +1,7 @@
 package io.github.r0mbaa.wms.core.layout;
 
 import io.github.r0mbaa.wms.core.layout.LayoutService.SaveResult;
+import io.github.r0mbaa.wms.layout.classification.Classification;
 import io.github.r0mbaa.wms.layout.model.Layout;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,6 +45,12 @@ class LayoutController {
     @PostMapping("/check")
     LayoutService.LayoutCheck check(@PathVariable String code, @RequestBody Layout layout) {
         return layouts.check(code, layout);
+    }
+
+    /** Класс текущей планировки и отклонения от регулярной структуры (FR-M15-08). */
+    @GetMapping("/classification")
+    Classification classification(@PathVariable String code) {
+        return layouts.classification(code);
     }
 
     /** Граф текущей версии (FR-M15-06): для наложения на план и для планировщика. */

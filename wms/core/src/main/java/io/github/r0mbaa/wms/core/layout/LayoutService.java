@@ -12,6 +12,8 @@ import io.github.r0mbaa.wms.core.topology.WarehouseRepository;
 import io.github.r0mbaa.wms.core.topology.Zone;
 import io.github.r0mbaa.wms.layout.cells.Cell;
 import io.github.r0mbaa.wms.layout.cells.CellGenerator;
+import io.github.r0mbaa.wms.layout.classification.Classification;
+import io.github.r0mbaa.wms.layout.classification.LayoutClassifier;
 import io.github.r0mbaa.wms.layout.graph.WarehouseGraph;
 import io.github.r0mbaa.wms.layout.model.Layout;
 import io.github.r0mbaa.wms.layout.validation.LayoutValidator;
@@ -114,8 +116,14 @@ public class LayoutService {
             throw new IllegalArgumentException("Планировка относится к складу " + edited.warehouseCode()
                     + ", а проверяется для склада " + warehouse.getCode());
         }
-        return new LayoutCheck(LayoutValidator.validate(edited),
+        return new LayoutCheck(LayoutValidator.validate(edited), LayoutClassifier.classify(edited),
                 preview.changes(warehouse.getId(), CellGenerator.generate(edited)));
+    }
+
+    /** Класс текущей планировки (FR-M15-08): от него зависит, какие алгоритмы к ней применимы. */
+    @Transactional(readOnly = true)
+    public Classification classification(String warehouseCode) {
+        return LayoutClassifier.classify(current(warehouseCode));
     }
 
     /** Граф текущей версии планировки (FR-M15-06), из кэша по версии (§8.7, Д4). */
@@ -159,7 +167,10 @@ public class LayoutService {
     public record SaveResult(long version, int cells, int added, int removed) {
     }
 
-    /** @param changes что изменится в ячейках учёта, если сохранить планировку */
-    public record LayoutCheck(ValidationReport validation, CellChanges changes) {
+    /**
+     * @param classification класс планировки (FR-M15-08)
+     * @param changes        что изменится в ячейках учёта, если сохранить планировку
+     */
+    public record LayoutCheck(ValidationReport validation, Classification classification, CellChanges changes) {
     }
 }

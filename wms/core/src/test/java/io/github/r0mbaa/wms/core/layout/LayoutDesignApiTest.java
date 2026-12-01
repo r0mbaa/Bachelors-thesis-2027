@@ -72,6 +72,11 @@ class LayoutDesignApiTest {
                 .content(json.writeValueAsString(layout)))
                 .hasStatusOk()
                 .bodyJson().extractingPath("$.cells").isEqualTo(900);
+        assertThat(mvc.get().uri("/api/v1/warehouses/WH1/layout/classification"))
+                .hasStatusOk()
+                .bodyJson()
+                .hasPathSatisfying("$.layoutClass", v -> v.assertThat().isEqualTo("SINGLE_BLOCK_RECTANGULAR"))
+                .hasPathSatisfying("$.aisles", v -> v.assertThat().isEqualTo(3));
     }
 
     @Test
@@ -104,6 +109,7 @@ class LayoutDesignApiTest {
                 .hasStatusOk()
                 .bodyJson()
                 .hasPathSatisfying("$.validation.issues", v -> v.assertThat().asArray().isEmpty())
+                .hasPathSatisfying("$.classification.layoutClass", v -> v.assertThat().isEqualTo("GENERAL_GRAPH"))
                 .hasPathSatisfying("$.changes.removed", v -> v.assertThat().isEqualTo(6))
                 .hasPathSatisfying("$.changes.removedWithStock", v -> v.assertThat().asArray()
                         .containsExactly(cell(1, 2, 1, 1)));
